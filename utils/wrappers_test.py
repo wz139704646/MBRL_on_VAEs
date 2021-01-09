@@ -1,3 +1,5 @@
+# test some changes to wrappers.py
+
 import numpy as np
 from collections import deque
 import gym
@@ -131,10 +133,10 @@ class ClipRewardEnv(gym.RewardWrapper):
 
 class WarpFrame(gym.ObservationWrapper):
     def __init__(self, env):
-        """Warp frames to 84x84 as done in the Nature paper and later work."""
+        """Warp frames to 64x64"""
         gym.ObservationWrapper.__init__(self, env)
-        self.width = 84
-        self.height = 84
+        self.width = 64
+        self.height = 64
         self.observation_space = spaces.Box(low=0, high=255,
             shape=(self.height, self.width, 1), dtype=np.uint8)
 
@@ -244,7 +246,7 @@ class ImageToPyTorch(gym.ObservationWrapper):
         self.observation_space = gym.spaces.Box(low=0.0, high=1.0, shape=(old_shape[-1]*3, old_shape[0], old_shape[1]), dtype=np.uint8)
 
     def observation(self, observation):
-        return np.swapaxes(np.swapaxes(observation, 2, 0), 1, 3).reshape(1, 12, 84, 84)
+        return np.swapaxes(np.swapaxes(observation, 2, 0), 1, 3).reshape(1, 12, 64, 64)
     
 
 def wrap_pytorch(env):

@@ -19,9 +19,9 @@ def parse_args():
     desc = "VAE reconstructs images observaed in atari game"
     parser = argparse.ArgumentParser(description=desc)
 
-    parser.add_argument('--env-name', type=str, default='MontezumaRevengeNoFrameskip-v0',
+    parser.add_argument('--env-name', type=str, default='PongNoFrameskip-v0',
                         help='the name of atari game used as env (NoFrameskip required)'
-                        ' (default "MontezumaRevengeNoFrameskip-v0")')
+                        ' (default "PongNoFrameskip-v0")')
     parser.add_argument('--dataset-size', type=int, default=64000, metavar='N',
                         help='whole dataset size (number of observations) (default 64000)')
     parser.add_argument('--batch-size', type=int, default=128, metavar='N',
@@ -94,6 +94,7 @@ def configuration(args):
 
     global_conf['device'] = torch.device("cuda" if args.cuda else "cpu")
     global_conf['image_size'] = (84, 84)
+    global_conf['image_channels'] = 1
     global_conf['data_dir'] = './dataset'
     global_conf['res_dir'] = './results'
     global_conf['data_division'] = [0.7, 0.3]  # train, test
@@ -165,10 +166,11 @@ def main(args):
     data_dir = global_conf["data_dir"]
     res_dir = global_conf["res_dir"]
     div = global_conf['data_division']
+    img_chs = global_conf['image_channels']
 
     # data file name
-    data_file = os.path.join(data_dir, "{}_{}.pt".format(
-        args.env_name, args.dataset_size))
+    data_file = os.path.join(data_dir, "{}_ch{}_{}x{}_{}.pt".format(
+        args.env_name, img_chs, img_size[0], img_size[1], args.dataset_size))
     # prepare data
     train_loader, test_loader = prepare_data(args, data_file, div)
 
