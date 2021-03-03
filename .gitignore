@@ -136,3 +136,9 @@ dataset
 
 # results files
 results
+
+# save files
+checkpoints
+
+# log files
+logs

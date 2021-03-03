@@ -56,7 +56,7 @@ class VAE(BaseVAE):
         if self.binary:
             # binary input data, use Bernoulli MLP decoder
             return torch.sigmoid(self.fc4(h3))
-        
+
         # otherwise use Gaussian MLP decoder
         return self.fc4_mean(h3), self.fc4_var(h3)
 
@@ -84,7 +84,7 @@ class VAE(BaseVAE):
     def reconstruct(self, input, **kwargs):
         """reconstruct from the input"""
         decoded = self.forward(input)[0]
-        
+
         if not self.binary:
             # use Guassian, smaple from decoded Gaussian distribution(use reparameterization trick)
             mu_o, logvar_o = decoded
@@ -110,7 +110,7 @@ class VAE(BaseVAE):
             mu_o, logvar_o = decoded
             recon_x_distribution = Normal(loc=mu_o, scale=torch.exp(0.5*logvar_o))
             MLD = -recon_x_distribution.log_prob(x).sum(1).mean()
-        
+
         return MLD + KLD
 
 
@@ -148,7 +148,7 @@ class ConvVAE(BaseVAE):
         # Gaussian MLP
         self.fc_mean = nn.Linear(hidden_size, dim_z)
         self.fc_logvar = nn.Linear(hidden_size, dim_z)
-        
+
         # layers transform latent variables to features (via hidden units)
         self.latent_to_features = nns.create_mlp(
             dim_z, [hidden_size, self.flat_conv_output_size])
@@ -181,15 +181,15 @@ class ConvVAE(BaseVAE):
         h = self.features_to_hidden(features)
 
         return self.fc_mean(h), self.fc_logvar(h)
-    
+
     def decode(self, code):
         """CNN decoder"""
         features = self.latent_to_features(code)
         features = features.view(-1, *self.conv_output_size)
         if self.binary:
             return self.conv_decoder(features)
-        
-        return self.conv_decoder(features), self.conv_decoder_logvar(features) 
+
+        return self.conv_decoder(features), self.conv_decoder_logvar(features)
 
     def reparameterize(self, mu, logvar):
         """reparameterization trick"""
@@ -218,7 +218,7 @@ class ConvVAE(BaseVAE):
                 torch.flatten(mean_dec, start_dim=1),
                 torch.flatten(logvar_dec, start_dim=1)
             ).view(-1, *self.input_size)
-        
+
         # Bernoulli, directly return
         return samples
 
@@ -233,7 +233,7 @@ class ConvVAE(BaseVAE):
                 torch.flatten(mean_dec, start_dim=1),
                 torch.flatten(logvar_dec, start_dim=1)
             ).view(-1, *self.input_size)
-        
+
         # Bernoulli, directly return
         return decoded
 
@@ -258,5 +258,5 @@ class ConvVAE(BaseVAE):
             recon_x_distribution = Normal(loc=mean_dec.view(-1, flat_input_size),
                                           scale=torch.exp(0.5*logvar_dec.view(-1, flat_input_size)))
             MLD = -recon_x_distribution.log_prob(x.view(-1, flat_input_size)).sum(1).mean()
-        
+
         return KLD + MLD
