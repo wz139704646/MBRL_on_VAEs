@@ -4,9 +4,7 @@ from torchvision import datasets, transforms
 
 
 class GridWorld(object):
-    def __init__(self, env_mode=2, no_wall=False, no_door=False, no_key=True):
-        simple_image = False
-
+    def __init__(self, env_mode=2, no_wall=False, no_door=False, no_key=True, simple_image=False):
         self.env_mode = env_mode
         self.no_wall = no_wall
         self.no_door = no_door
@@ -21,9 +19,12 @@ class GridWorld(object):
             self.image_size = 32
             self.grid_size = self.image_size // self.grid_num
             self.margin = 0
-            self.blocks = [20,
-                           21,
-                           23]
+            if self.no_wall:
+                self.blocks = []
+            else:
+                self.blocks = [20,
+                               21,
+                               23]
 
         elif env_mode == 2:
             # maze of large size 8X8
@@ -55,7 +56,7 @@ class GridWorld(object):
         if simple_image:
             # No beautification for image
             self.image_man = np.zeros((3, self.grid_size, self.grid_size))
-            self.image_man[:,:,:] = [[[1]], [[0]], [[0]]]
+            self.image_man[:,:,:] = [[[1]], [[1]], [[1]]]
             self.image_key = np.zeros((3, self.grid_size, self.grid_size))
             self.image_key[:, :, :] = [[[0]], [[1]], [[0]]]
             self.image_door = np.zeros((3, self.grid_size, self.grid_size))

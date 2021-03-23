@@ -39,6 +39,8 @@ def latent_traversal_detailed(model, traversal_vals, img_size, save_dir,
                        space under normal distribution)
     :param num: number of base samples (only work when base_input is None)
     """
+    model.eval()
+
     with torch.no_grad():
         dim_z = model.dim_z
         if base_input is not None:

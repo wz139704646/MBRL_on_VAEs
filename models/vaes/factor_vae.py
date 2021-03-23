@@ -65,9 +65,9 @@ class FactorVAE(VAE):
         if optim_index == 0:
             # update VAE
             decoded = inputs[0]
-            x = inputs[1]
-            encoded = inputs[2]
-            z = inputs[3]
+            encoded = inputs[1]
+            z = inputs[2]
+            x = inputs[3]
             mu, logvar = encoded
 
             # KL divergence term
@@ -85,7 +85,11 @@ class FactorVAE(VAE):
             Dz = self.discriminator(z)
             tc_loss = (Dz[:, :1] - Dz[:, 1:]).mean()
 
-            return KLD + MLD + self.gamma * tc_loss
+            return {
+                "loss": KLD + MLD + self.gamma * tc_loss,
+                "KLD": KLD,
+                "MLD": MLD,
+                "tc_loss": tc_loss}
         elif optim_index == 1:
             # update discriminator
             z = inputs[0].detach()
@@ -103,4 +107,4 @@ class FactorVAE(VAE):
             D_tc_loss = 0.5 * (F.cross_entropy(Dz, zeros) +
                             F.cross_entropy(Dz_pperm, ones))
 
-            return D_tc_loss
+            return {"loss": D_tc_loss, "D_tc_loss": D_tc_loss}

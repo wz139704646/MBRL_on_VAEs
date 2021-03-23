@@ -1,0 +1,53 @@
+general:
+  seed: 1
+dataset:
+  default_dir: ./dataset
+  type: collect
+  path: GridWorld_ch3_64x64_6400.pt
+  collect_config:
+    dataset_size: 6400
+    type: custom
+    env_name: GridWorld
+    custom_args:
+      env_init_args:
+        env_mode: 2
+        no_wall: true
+        no_door: true
+        no_key: true
+    env_config:
+      image_size: !!python/tuple [3, 64, 64]
+  load_config:
+    batch_size: 64
+    division:
+      - 0.7
+      - 0.3
+    shuffle: true
+model:
+  model_name: ConvBetaTCVAE
+  model_args:
+    input_size: !!python/tuple [3, 64, 64]
+    kernel_sizes:
+      - 32
+      - 32
+      - 64
+      - 64
+    hidden_size: 256
+    dim_z: 20
+    alpha: 1.
+    beta: 6.
+    gamma: 1.
+    sampling: mws
+    binary: true
+train:
+  epochs: 50
+  cuda: false
+  log_interval: 10
+  optimizer_config:
+    lr: 1.0e-3
+  save_config:
+    default_dir: ./checkpoints
+    path: GridWorld_ch3_64x64_6400/ConvBetaTCVAE_epoch50_z20_alpha1_beta6_gamma1.pth.tar
+test:
+  save_config:
+    default_dir: ./results/GridWorld_ch3_64x64_6400/ConvBetaTCVAE/
+    tag: epoch50_z20_alpha1_beta6_gamma1

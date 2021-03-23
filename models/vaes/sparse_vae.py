@@ -85,9 +85,13 @@ class SparseVAE(BaseVAE):
 
         return self.decode(z), encoded
 
+    def sample_latent(self, num, device, **kwargs):
+        """sample from latent space and return the codes"""
+        return torch.randn(num, self.dim_z)
+
     def sample(self, num, device, **kwargs):
         """sample from latent space and return the decoded output"""
-        z = torch.randn(num, self.dim_z)
+        z = self.sample_latent(num, device, **kwargs)
         samples = self.decode(z)
 
         if not self.binary:
@@ -96,22 +100,26 @@ class SparseVAE(BaseVAE):
 
         return samples
 
+    def decoded_to_output(self, decoded, **kwargs):
+        """return the output for given decoded result"""
+        if self.binary:
+            return decoded.clone().detach()
+
+        # Gaussian
+        mean, logvar = decoded
+        return self.reparameterize(mean, logvar, None)
+
     def reconstruct(self, x, **kwargs):
         """reconstruct from the input"""
         decoded = self.forward(x)[0]
 
-        if not self.binary:
-            # Gaussian
-            mean, logvar = decoded
-            decoded = self.reparameterize(mean, logvar, None)
-
-        return decoded
+        return self.decoded_to_output(decoded, **kwargs)
 
     def loss_function(self, *inputs, **kwargs):
         """loss function described in the paper (eq. (11))"""
         decoded = inputs[0]
-        x = inputs[1]
-        encoded = inputs[2]
+        encoded = inputs[1]
+        x = inputs[2]
 
         mu, logvar, logspike = encoded
         if self.binary:
@@ -129,6 +137,6 @@ class SparseVAE(BaseVAE):
 
         return {"loss": MLD + PRIOR, "MLD": MLD, "PRIOR": PRIOR}
 
-    def update_c(self, delta):
+    def update_epoch(self, delta):
         """warm-up strategy gradually increasing c during training"""
         self.c += delta

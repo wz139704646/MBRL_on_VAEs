@@ -44,10 +44,13 @@ class VAE(BaseVAE):
 
     def reparameterize(self, mu, logvar):
         """reparameterization trick"""
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std) # noise epsilon
+        if self.training:
+            std = torch.exp(0.5*logvar)
+            eps = torch.randn_like(std) # noise epsilon
 
-        return mu + eps * std
+            return mu + eps * std
+        else:
+            return mu
 
     def decode(self, code):
         """Guassian/Bernoulli MLP decoder"""
@@ -60,9 +63,13 @@ class VAE(BaseVAE):
         # otherwise use Gaussian MLP decoder
         return self.fc4_mean(h3), self.fc4_var(h3)
 
+    def sample_latent(self, num, device, **kwargs):
+        """sample from latent space and return the codes"""
+        return torch.randn(num, self.dim_z).to(device)
+
     def sample(self, num, device, **kwargs):
         """sample from latent space and return the decoded output"""
-        z = torch.randn(num, self.dim_z).to(device)
+        z = self.sample_latent(num, device, **kwargs)
         samples = self.decode(z)
 
         if not self.binary:
@@ -81,23 +88,27 @@ class VAE(BaseVAE):
 
         return self.decode(z), encoded
 
+    def decoded_to_output(self, decoded, **kwargs):
+        """return the output for given decoded result"""
+        if self.binary:
+            # use Bernoulli, can directly return as the reconstructed result
+            return decoded.clone().detach()
+
+        # use Guassian, smaple from decoded Gaussian distribution(use reparameterization trick)
+        mu_o, logvar_o = decoded
+        return self.reparameterize(mu_o, logvar_o)
+
     def reconstruct(self, input, **kwargs):
         """reconstruct from the input"""
         decoded = self.forward(input)[0]
 
-        if not self.binary:
-            # use Guassian, smaple from decoded Gaussian distribution(use reparameterization trick)
-            mu_o, logvar_o = decoded
-            decoded = self.reparameterize(mu_o, logvar_o)
-
-        # use Bernoulli, can directly return as the reconstructed result
-        return decoded
+        return self.decoded_to_output(decoded, **kwargs)
 
     def loss_function(self, *inputs, **kwargs):
         """loss function described in the paper (eq. (10))"""
         decoded = inputs[0]
-        x = inputs[1]
-        encoded = inputs[2]
+        encoded = inputs[1]
+        x = inputs[2]
 
         mu, logvar = encoded
         # KL divergence term
@@ -111,7 +122,7 @@ class VAE(BaseVAE):
             recon_x_distribution = Normal(loc=mu_o, scale=torch.exp(0.5*logvar_o))
             MLD = -recon_x_distribution.log_prob(x).sum(1).mean()
 
-        return MLD + KLD
+        return {"loss": KLD + MLD, "KLD": KLD, "MLD": MLD}
 
 
 class ConvVAE(BaseVAE):
@@ -193,10 +204,13 @@ class ConvVAE(BaseVAE):
 
     def reparameterize(self, mu, logvar):
         """reparameterization trick"""
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std) # noise epsilon
+        if self.training:
+            std = torch.exp(0.5*logvar)
+            eps = torch.randn_like(std) # noise epsilon
 
-        return mu + eps * std
+            return mu + eps * std
+        else:
+            return mu
 
     def forward(self, input):
         """autoencoder forward computation"""
@@ -206,9 +220,13 @@ class ConvVAE(BaseVAE):
 
         return self.decode(z), encoded
 
+    def sample_latent(self, num, device, **kwargs):
+        """sample from latent space and return the codes"""
+        return torch.randn(num, self.dim_z).to(device)
+
     def sample(self, num, device, **kwargs):
         """sample from latent space and return the decoded output"""
-        z = torch.randn(num, self.dim_z).to(device)
+        z = self.sample_latent(num, device, **kwargs)
         samples = self.decode(z)
 
         if not self.binary:
@@ -222,26 +240,29 @@ class ConvVAE(BaseVAE):
         # Bernoulli, directly return
         return samples
 
+    def decoded_to_output(self, decoded, **kwargs):
+        if self.binary:
+            # Bernoulli, directly return
+            return decoded.clone().detach()
+
+        # Gaussian
+        mean_dec, logvar_dec = decoded
+        return self.reparameterize(
+            torch.flatten(mean_dec, start_dim=1),
+            torch.flatten(logvar_dec, start_dim=1)
+        ).view(-1, *self.input_size)
+
     def reconstruct(self, input, **kwargs):
         """reconstruct from the input"""
         decoded = self.forward(input)[0]
 
-        if not self.binary:
-            # Gaussian
-            mean_dec, logvar_dec = decoded
-            decoded = self.reparameterize(
-                torch.flatten(mean_dec, start_dim=1),
-                torch.flatten(logvar_dec, start_dim=1)
-            ).view(-1, *self.input_size)
-
-        # Bernoulli, directly return
-        return decoded
+        return self.decoded_to_output(decoded, **kwargs)
 
     def loss_function(self, *inputs, **kwargs):
         """loss function described in the paper (eq. (10))"""
         decoded = inputs[0]
-        x = inputs[1]
-        encoded = inputs[2]
+        encoded = inputs[1]
+        x = inputs[2]
 
         flat_input_size = np.prod(self.input_size)
         mu, logvar = encoded
@@ -259,4 +280,4 @@ class ConvVAE(BaseVAE):
                                           scale=torch.exp(0.5*logvar_dec.view(-1, flat_input_size)))
             MLD = -recon_x_distribution.log_prob(x.view(-1, flat_input_size)).sum(1).mean()
 
-        return KLD + MLD
+        return {"loss": KLD + MLD, "KLD": KLD, "MLD": MLD}
