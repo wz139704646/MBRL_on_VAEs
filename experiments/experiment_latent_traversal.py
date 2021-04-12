@@ -6,11 +6,12 @@ import torch
 import random
 import matplotlib.pyplot as plt
 
-from models.vaes import *
-from load_model import load_model
-from env_collect import collect_data
 from base_experiment import BaseExperiment
-from latent_traversal import adapt_latent_traversal
+from models.vaes import *
+from utils.exp import set_seed
+from handlers.load_model import adapt_load_model
+from handlers.env_collect import collect_data
+from handlers.latent_traversal import adapt_latent_traversal
 
 
 class LatentTraversalExperiment(BaseExperiment):
@@ -21,7 +22,7 @@ class LatentTraversalExperiment(BaseExperiment):
         try:
             # environment setting
             if "general" in self.exp_configs:
-                torch.manual_seed(self.exp_configs['general'].seed)
+                set_seed(self.exp_configs['general'].seed)
 
             # ensure results directory
             test_config = self.exp_configs['test']
@@ -29,8 +30,8 @@ class LatentTraversalExperiment(BaseExperiment):
             if not os.path.exists(save_config.default_dir):
                 os.makedirs(save_config.default_dir)
 
-        except Exception as e:
-            raise Exception("applying experiment config encountered error: {}".format(e))
+        except Exception:
+            raise
 
     def before_run(self, **kwargs):
         """preparations needed be done before run the experiment"""
@@ -48,11 +49,11 @@ class LatentTraversalExperiment(BaseExperiment):
             if model_path == '':
                 raise Exception("no model path in the experiment config")
 
-            load_res = load_model(model_path)
+            load_res = adapt_load_model(model_path)
             self.model = load_res["model"]
             self.saved_configs = load_res["configs"]
-        except Exception as e:
-            raise Exception("preparation before run encountered error: {}".format(e))
+        except Exception:
+            raise
 
     def get_model_name(self):
         """return the name of the model class"""
@@ -148,8 +149,8 @@ class LatentTraversalExperiment(BaseExperiment):
         """run the main part of the experiment"""
         try:
             self.latent_traversal(**kwargs)
-        except Exception as e:
-            raise Exception("running experiment encountered error: {}".format(e))
+        except Exception:
+            raise
 
     def after_run(self, **kwargs):
         """cleaning up needed be done after run the experiment"""

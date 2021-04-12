@@ -1,0 +1,72 @@
+general:
+  seed: 1
+rl:
+  device: 'cpu'
+  log_interval: 250
+  eval_interval: 1
+  save_interval: 2
+  env:
+    env_name: 'MountainCar'
+    max_episode_steps: 500
+    num_real_envs: 1
+    gamma: 0.99
+  save_model_config:
+    default_dir: './checkpoints'
+    path: 'MountainCar/mbpo_mlp_test1'
+    store_cfgs:
+      - rl
+  save_result_config:
+    default_dir: './results/MountainCar/mbpo_mlp_test1'
+  algos:
+    mbpo:
+      num_total_epochs: 100
+      dynamics_hidden_dims: [200, 200, 200, 200]
+      l2_loss_coefs: [0.000025, 0.00005, 0.000075, 0.000075, 0.0001]
+      lr: 1.0e-3
+      dynamics_batch_size: 64
+      num_dynamics_networks: 7
+      num_elite_dynamics_networks: 5
+      real_buffer_size: 1000000
+      rollout_batch_size: 100000
+      num_model_retain_epochs: 1
+      model_update_interval: 100
+      rollout_schedule: [ 20, 150, 1, 1 ]
+      max_num_epochs: 50
+      real_sample_ratio: 0.
+      num_warmup_samples: 5000
+    sac:
+      actor_hidden_dims: [256, 256]
+      critic_hidden_dims: [256, 256]
+      num_grad_steps: 40
+      batch_size: 64
+      target_entropy: -3
+      actor_lr: 3.0e-4
+      critic_lr: 3.0e-4
+      soft_target_tau: 5.0e-3
+log:
+  logger_config:
+    dict:
+      version: 1
+      formatters:
+        default:
+          format: "[%(levelname)s] %(asctime)s-%(filename)s-%(name)s  %(message)s"
+      handlers:
+        console:
+          class: logging.StreamHandler
+          level: DEBUG
+          formatter: default
+          stream: ext://sys.stdout
+      loggers:
+        exp:
+          level: DEBUG
+          handlers:
+            - console
+          propagate: false
+      root:
+        level: INFO
+        handlers:
+          - console
+  summary_writer_config:
+    log_dir: ./run/mbpo/mlp_test1
+    comment: train_mbpo_mlp_test1
+

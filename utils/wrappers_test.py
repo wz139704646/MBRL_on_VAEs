@@ -247,7 +247,7 @@ class ImageToPyTorch(gym.ObservationWrapper):
 
     def observation(self, observation):
         return np.swapaxes(np.swapaxes(observation, 2, 0), 1, 3).reshape(1, 12, 64, 64)
-    
+
 
 def wrap_pytorch(env):
     return ImageToPyTorch(env)

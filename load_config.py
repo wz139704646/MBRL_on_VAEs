@@ -1,5 +1,17 @@
 import yaml
+
 from config import *
+from utils.general import integrate_dicts
+
+
+def load_config_from_files(filepaths):
+    """load config from several files (merge the key-value pairs)"""
+    cfgs = []
+
+    for fp in filepaths:
+        cfgs.append(load_config_yaml(fp))
+
+    return integrate_dicts(cfgs)
 
 
 def load_config_yaml(filepath):
@@ -20,6 +32,10 @@ def load_config_yaml(filepath):
                 cfg_map['train'] = TrainConfiguration(**cfg['train'])
             if 'test' in cfg:
                 cfg_map['test'] = TestConfiguration(**cfg['test'])
+            if 'log' in cfg:
+                cfg_map['log'] = LogConfiguration(**cfg['log'])
+            if 'rl' in cfg:
+                cfg_map['rl'] = RLConfiguration(**cfg['rl'])
 
             return cfg_map
     except Exception as e:

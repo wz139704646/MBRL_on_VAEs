@@ -2,13 +2,16 @@ import numpy as np
 import random
 from torchvision import datasets, transforms
 
+import utils.exp as exp_utils
+
 
 class GridWorld(object):
-    def __init__(self, env_mode=2, no_wall=False, no_door=False, no_key=True, simple_image=False):
+    def __init__(self, env_mode=2, no_wall=False, no_door=False, no_key=True, simple_image=False, noise=None):
         self.env_mode = env_mode
         self.no_wall = no_wall
         self.no_door = no_door
         self.no_key = no_key
+        self.noise = noise
 
         if env_mode == 1:
             # maze of small size 4X4
@@ -178,7 +181,12 @@ class GridWorld(object):
         if not self.no_door:
             observ[:, (self.margin + self.pos_door[0] * self.grid_size):(self.margin + (self.pos_door[0] + 1) * self.grid_size),
             (self.margin + self.pos_door[1] * self.grid_size):(self.margin + (self.pos_door[1] + 1) * self.grid_size)] = self.image_door
-        return observ.astype(np.float32)
+        observ = observ.astype(np.float32)
+
+        if self.noise is not None:
+            observ = self.add_noise(observ)
+
+        return observ
 
     def get_state(self):
         return self.pos_man.astype(np.float32)
@@ -220,3 +228,10 @@ class GridWorld(object):
                 obs_mat.append(self.get_ob())
 
         return np.array(obs_mat)
+
+    def add_noise(self, ob):
+        """add noise to the observation"""
+        noise_fn = self.noise["handle_fn"]
+        noise_args = self.noise["args"]
+
+        return eval('exp_utils.' + noise_fn)(ob, **noise_args)

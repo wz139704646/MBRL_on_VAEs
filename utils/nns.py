@@ -1,6 +1,7 @@
-# neural networks related functions
+# neural networks related utils
 import math
 import torch
+import numpy as np
 import torchvision
 import torch.nn as nn
 
@@ -102,3 +103,50 @@ def cal_cnn2d_shape(h_in, w_in, kernel_size, n_layers=1,
             (w_out + 2*padding - dilation*(kernel_size-1) - 1) / stride + 1)
 
     return h_out, w_out
+
+
+def soft_update(source_model: nn.Module, target_model: nn.Module, tau):
+    for target_param, param in zip(target_model.parameters(), source_model.parameters()):
+        target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+
+
+def copy_model_params_from_to(source, target):
+    for target_param, param in zip(target.parameters(), source.parameters()):
+        target_param.data.copy_(param.data)
+
+
+def init(module, weight_init=None, bias_init=None):
+    if weight_init:
+        weight_init(module.weight.data)
+    if bias_init:
+        bias_init(module.bias.data)
+
+
+def get_flat_params(model):
+    params = []
+    for param in model.parameters():
+        params.append(param.data.view(-1))
+
+    flat_params = torch.cat(params)
+    return flat_params
+
+
+def set_flat_params(model, flat_params):
+    prev_ind = 0
+    for param in model.parameters():
+        flat_size = int(np.prod(list(param.size())))
+        param.data.copy_(
+            flat_params[prev_ind:prev_ind + flat_size].view(param.size()))
+        prev_ind += flat_size
+
+
+def get_flat_grad(net, grad_grad=False):
+    grads = []
+    for param in net.parameters():
+        if grad_grad:
+            grads.append(param.grad.grad.view(-1))
+        else:
+            grads.append(param.grad.view(-1))
+
+    flat_grad = torch.cat(grads)
+    return flat_grad

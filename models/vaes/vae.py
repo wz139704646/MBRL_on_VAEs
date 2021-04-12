@@ -20,6 +20,7 @@ class VAE(BaseVAE):
         super(VAE, self).__init__()
         self.dim_z = dim_z
         self.binary = binary
+        self.input_size = (n_input,)
 
         # encoder layers, use Gaussian MLP as encoder
         self.fc1 = nn.Linear(n_input, n_hidden) # the first layer

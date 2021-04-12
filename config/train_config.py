@@ -9,6 +9,7 @@ class OptimizerConfiguration(BaseConfiguration):
         super(OptimizerConfiguration, self).__init__(**kwargs)
         # default values
         self.lr = 1e-3
+        self.subs = {} # multiple optimizer nodes
 
         self.set_necessary_configs(**kwargs)
         self.set_unnecessary_configs(**kwargs)
@@ -21,6 +22,10 @@ class OptimizerConfiguration(BaseConfiguration):
         """set optimizer configs that not necessarily provided by user"""
         if "lr" in kwargs:
             self.lr = kwargs["lr"]
+        if "subs" in kwargs:
+            subs_cfg = kwargs["subs"]
+            for name in subs_cfg.keys():
+                self.subs[name] = OptimizerConfiguration(**subs_cfg[name])
 
 
 class SaveModelConfiguration(BaseConfiguration):
@@ -32,10 +37,7 @@ class SaveModelConfiguration(BaseConfiguration):
         # default values
         self.default_dir = './checkpoints'
         self.path = ''
-        self.store_model_config = True
-        self.store_general_config = True
-        self.store_dataset_config = True
-        self.store_train_config = True
+        self.store_cfgs = []
 
         self.set_necessary_configs(**kwargs)
         self.set_unnecessary_configs(**kwargs)
@@ -50,14 +52,8 @@ class SaveModelConfiguration(BaseConfiguration):
             self.default_dir = kwargs["default_dir"]
         if "path" in kwargs:
             self.path = kwargs["path"]
-        if "store_model_config" in kwargs:
-            self.store_model_config = kwargs["store_model_config"]
-        if "store_general_config" in kwargs:
-            self.store_general_config = kwargs["store_general_config"]
-        if "store_dataset_config" in kwargs:
-            self.store_dataset_config = kwargs["store_dataset_config"]
-        if "store_train_config" in kwargs:
-            self.store_train_config = kwargs["store_train_config"]
+        if "store_cfgs" in kwargs:
+            self.store_cfgs = kwargs['store_cfgs']
 
 
 class TrainConfiguration(BaseConfiguration):

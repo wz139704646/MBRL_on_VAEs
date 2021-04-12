@@ -1,0 +1,15 @@
+general:
+  seed: 1
+test:
+  load_config:
+    path: checkpoints/GridWorld_ch3_64x64_6400/ConvJointVAE_epoch100_c64_temp0.67.pth.tar
+  save_config:
+    default_dir: ./results/GridWorld_ch3_64x64_6400/ConvJointVAE/latent_traversal/epoch100_c64_temp0.67_latent
+    tag: epoch100_c64_temp0.67_latent
+  test_args:
+    latent_traversal:
+      input_source: collect
+      num: 10
+      run_args:
+        disc_indices:
+          - 0

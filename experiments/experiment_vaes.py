@@ -2,15 +2,16 @@
 import os
 import time
 import torch
-from torch import optim
 import matplotlib.pyplot as plt
 
 from models.vaes import *
 from base_experiment import BaseExperiment
-from train_test import train_vae, test_vae
-from env_collect import collect_data
-from save_model import get_extra_setting
-from utils.exp import plot_losses
+from handlers.train_test import adapt_train, adapt_test
+from handlers.save_model import get_extra_setting
+from handlers.load_data import adapt_load_data
+from handlers.configure_optimizer import adapt_configure_optimizer
+from handlers.configure_log import adapt_configure_log
+from utils.exp import plot_losses, set_seed
 from utils.data import prepare_data_custom_tensor
 
 
@@ -22,7 +23,7 @@ class VAEsExperiment(BaseExperiment):
         try:
             # environment setting
             if "general" in self.exp_configs:
-                torch.manual_seed(self.exp_configs['general'].seed)
+                set_seed(self.exp_configs['general'].seed)
 
             # ensure directories
             dataset_config = self.exp_configs["dataset"]
@@ -73,45 +74,41 @@ class VAEsExperiment(BaseExperiment):
             device = torch.device("cuda" if train_config.cuda else "cpu")
             self.exp_configs["train"].extra["device"] = device
             self.exp_configs["test"].extra["device"] = device
-        except Exception as e:
-            raise Exception("applying experiment config encountered error: {}".format(e))
+
+            log_config = self.exp_configs["log"] if "log" in self.exp_configs else None
+            self.log_comp = adapt_configure_log(log_config)
+        except Exception:
+            raise
 
     def prepare_data(self):
         """dataset preparation"""
         kwargs = {
             'num_workers': 1,'pin_memory': True
         } if self.exp_configs["train"].cuda else {}
+        model_config = self.exp_configs["model"]
         dataset_config = self.exp_configs["dataset"]
 
-        if os.path.exists(self.dataset_file):
-            # load from disk
-            return tuple(prepare_data_custom_tensor(dataset_config.load_config.batch_size,
-                                                    data_file=self.dataset_file,
-                                                    shuffle=dataset_config.load_config.shuffle,
-                                                    div=dataset_config.load_config.division, **kwargs))
-        elif dataset_config.type == "collect":
-            # collect from env
-            data = collect_data(dataset_config.collect_config)
-            return tuple(prepare_data_custom_tensor(dataset_config.load_config.batch_size, data=data,
-                                                    shuffle=dataset_config.load_config.shuffle,
-                                                    div=dataset_config.load_config.division, **kwargs))
-        else:
-            raise Exception("unable to prepare data")
+        return adapt_load_data(model_config.model_name, self.dataset_file,
+                               dataset_config, **kwargs)
 
     def train(self, epoch):
         """training process"""
         train_args = self.exp_configs["train"]
+        model_config = self.exp_configs["model"]
         train_loader = self.dataloaders[0]
 
-        return train_vae(self.model, self.optimizer, train_loader, train_args, epoch)
+        return adapt_train(model_config.model_name, self.model, self.optimizer,
+                           train_loader, train_args, epoch, self.log_comp)
 
     def test(self, epoch):
         """testing model"""
         train_args = self.exp_configs["train"]
         test_args = self.exp_configs["test"]
+        model_config = self.exp_configs["model"]
         test_loader = self.dataloaders[1]
 
-        return test_vae(self.model, test_loader, train_args, test_args, epoch)
+        return adapt_test(model_config.model_name, self.model, test_loader,
+                          train_args, test_args, epoch, self.log_comp)
 
     def before_run(self, **kwargs):
         """preparations needed be done before run the experiment"""
@@ -121,14 +118,24 @@ class VAEsExperiment(BaseExperiment):
 
             self.dataloaders = self.prepare_data()
             self.model = eval(model_config.model_name)(**model_config.model_args)
-            self.optimizer = optim.Adam(self.model.parameters(), lr=train_config.optimizer_config.lr)
-        except Exception as e:
-            raise Exception("preparation before run encountered error: {}".format(e))
+            self.optimizer = adapt_configure_optimizer(
+                model_config.model_name, self.model, train_config.optimizer_config)
+
+            # tensorboard logging
+            if "summary_writer" in self.log_comp:
+                writer = self.log_comp["summary_writer"]
+                writer.add_graph(self.model, torch.zeros(1, *self.model.input_size))
+        except Exception:
+            raise
 
     def run(self, **kwargs):
         """run the main part of the experiment"""
         try:
             train_config = self.exp_configs["train"]
+            writer = None
+
+            if "summary_writer" in self.log_comp:
+                writer = self.log_comp["summary_writer"]
 
             epochs = train_config.epochs
             self.losses = {}
@@ -141,12 +148,20 @@ class VAEsExperiment(BaseExperiment):
                     else:
                         self.losses[k] = [avg_loss[k]]
 
-                self.test(epoch)
+                    # tensorboard logging
+                    if writer is not None:
+                        writer.add_scalar("[loss/train] " + k, avg_loss[k], epoch-1)
+
+                test_loss = self.test(epoch)
+                # tensorboard logging
+                if writer is not None:
+                    for k in test_loss.keys():
+                        writer.add_scalar("[loss/test]" + k, test_loss[k], epoch-1)
 
                 # updates after each epoch
                 self.model.update_epoch()
-        except Exception as e:
-            raise Exception("running experiment encountered error: {}".format(e))
+        except Exception:
+            raise
 
     def _save(self, extra=None):
         """save the model and configurations"""
@@ -154,14 +169,8 @@ class VAEsExperiment(BaseExperiment):
         save_config = train_config.save_config
 
         cfgs = {}
-        if save_config.store_model_config:
-            cfgs["model"] = self.exp_configs["model"].raw
-        if save_config.store_general_config:
-            cfgs["general"] = self.exp_configs["general"].raw
-        if save_config.store_dataset_config:
-            cfgs["dataset"] = self.exp_configs["dataset"].raw
-        if save_config.store_train_config:
-            cfgs["train"] = self.exp_configs["train"].raw
+        for cfg_key in save_config.store_cfgs:
+            cfgs[cfg_key] = self.exp_configs[cfg_key].raw
 
         torch.save({
             "exp_configs": cfgs,
@@ -171,14 +180,20 @@ class VAEsExperiment(BaseExperiment):
     def after_run(self, **kwargs):
         """cleaning up needed be done after run the experiment"""
         # save model, plot losses
-        if self.save_model:
-            model_config = self.exp_configs["model"]
-            extra_setting = get_extra_setting(model_config.model_name, self.model)
-            self._save(extra=extra_setting)
-        if self.save_test_results:
-            test_config = self.exp_configs["test"]
-            filename = "loss.png"
-            filename = test_config.save_config.tag + "-" + filename \
-                if test_config.save_config.tag else filename
+        try:
+            if self.save_model:
+                model_config = self.exp_configs["model"]
+                extra_setting = get_extra_setting(model_config.model_name, self.model)
+                self._save(extra=extra_setting)
+            if self.save_test_results:
+                test_config = self.exp_configs["test"]
+                filename = "loss.png"
+                filename = test_config.save_config.tag + "-" + filename \
+                    if test_config.save_config.tag else filename
 
-            plot_losses(self.losses, os.path.join(self.results_dir, filename))
+                plot_losses(self.losses, os.path.join(self.results_dir, filename))
+            if "summary_writer" in self.log_comp:
+                writer = self.log_comp["summary_writer"]
+                writer.close()
+        except Exception:
+            raise

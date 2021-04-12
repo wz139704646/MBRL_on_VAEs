@@ -1,0 +1,86 @@
+general:
+  seed: 1
+dataset:
+  default_dir: ./dataset
+  type: collect
+  path: GridWorld_ch3_64x64_6400.pt
+  collect_config:
+    dataset_size: 6400
+    type: custom
+    env_name: GridWorld
+    custom_args:
+      env_init_args:
+        env_mode: 2
+        no_wall: true
+        no_door: true
+        no_key: true
+        simple_image: false
+    env_config:
+      image_size: !!python/tuple [3, 64, 64]
+  load_config:
+    batch_size: 32
+    division:
+      - 0.7
+      - 0.3
+    shuffle: true
+model:
+  model_name: ConvJointVAE
+  model_args:
+    temp: 0.67
+    latent_disc:
+      - 64
+    disc_capacity: !!python/tuple [0., 4, 5.0e-4, 100]
+    cont_capacity: null
+    input_size: !!python/tuple [3, 64, 64]
+    kernel_sizes:
+      - 32
+      - 32
+      - 64
+      - 64
+    hidden_size: 256
+    dim_z: 64
+    binary: true
+train:
+  epochs: 100
+  cuda: false
+  log_interval: 10
+  optimizer_config:
+    lr: 1.0e-3
+  save_config:
+    default_dir: ./checkpoints
+    path: GridWorld_ch3_64x64_6400/ConvJointVAE_epoch100_c64_temp0.67.pth.tar
+    store_cfgs:
+      - general
+      - dataset
+      - model
+      - train
+test:
+  save_config:
+    default_dir: ./results/GridWorld_ch3_64x64_6400/ConvJointVAE/epoch100_c64_temp0.67
+    tag: epoch100_c64_temp0.67
+log:
+  logger_config:
+    dict:
+      version: 1
+      formatters:
+        default:
+          format: "[%(levelname)s] %(asctime)s-%(filename)s-%(name)s  %(message)s"
+      handlers:
+        console:
+          class: logging.StreamHandler
+          level: DEBUG
+          formatter: default
+          stream: ext://sys.stdout
+      loggers:
+        exp:
+          level: DEBUG
+          handlers:
+            - console
+          propagate: false
+      root:
+        level: INFO
+        handlers:
+          - console
+  summary_writer_config:
+    log_dir: ./run/jointVAE/disc64
+    comment: train_jointVAE_disc64

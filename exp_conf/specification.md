@@ -38,13 +38,11 @@ Based on pytorch
     - log_interval: 训练的日志间隔 (间隔多少个数据点)
     - optimizer_config: 优化器相关参数，包含
         - lr: 学习率
+        - subs: 子优化器，主要用于需要配置多个优化器的模型
     - save_config: 保存模型相关参数
         - default_dir: 默认文件夹 (默认空)
         - path: 模型保存的路径 (若未设置则查找模型配置相关路径)
-        - store_model_config: 是否保存模型配置，即配置文件中 model 字段的配置 (true or false, on or off) (default true)
-        - store_general_config: 是否保存通用配置，即配置文件中 general 字段的配置 (true or false, on or off) (default true)
-        - store_dataset_config: 是否保存数据集配置，即配置文件中 dataset 字段的配置 (true or false, on or off) (default true)
-        - store_train_config: 是否保存训练配置，即配置文件中 train 字段的配置 (true or false, on or off) (default true)
+        - store_cfgs: 需要保存的实验配置字段 (一级字段)
 5. test
     测试模型所需参数
     - load_config: 加载模型相关参数
@@ -60,5 +58,29 @@ Based on pytorch
                 - collect: 表示基础输入 (codes) 采用在环境中采集的数据进行编码后的内容
             - num: 基础输入的数量 (超出数据集种类总数时采用数据集总数数量(仅适用于自定义环境情况))
             - run_args: 进行隐变量遍历时所需参数
+        - encoding: 模型的编码实验
+6. log
+    日志相关配置
+    - logger_config: 日志logger配置信息
+        - path: 使用文件配置 logger , 提供文件路径
+        - dict: 使用该配置指定的字典参数配置 logger (该选项优先于 path 应用)
+        - name: 实验中使用的 logger 的名称
+    - summary_writer_config: tensorboard summary writer 配置
+7. rl
+    强化学习实验相关配置
+    device: 设备名称 (e.g. 'cpu', 'cuda', 'cuda:0')
+    log_interval: 日志输出间隔 (steps)
+    eval_interval: 模型分析结果输出间隔 (epochs)
+    save_interval: 模型保存参数间隔 (epochs)
+    env: 环境配置
+        env_name: 环境名称
+        num: 并行运行环境数
+        gamma: discount rate
+        max_episode_steps: 一次 episode 的步数
+    algos: 使用的算法相关配置，字典类型
+    save_model_config: 保存模型相关参数，同之前 train 下的 save_config
+    save_result_config: 保存结果相关参数，同之前 test 下的 save_config
+    model_load_path: 加载已保存的模型的路径
+    buffer_load_path: 加载已保存 buffer 的路径
 
 
