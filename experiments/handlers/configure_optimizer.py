@@ -29,7 +29,7 @@ def configure_optimizer_factor_vae(model, optimizer_config):
 
 configure_optimizer_handlers = {
     "VAE": configure_optimizer_vae,
-    "ConVAE": configure_optimizer_vae,
+    "ConvVAE": configure_optimizer_vae,
     "BetaVAE": configure_optimizer_vae,
     "ConvBetaVAE": configure_optimizer_vae,
     "BetaTCVAE": configure_optimizer_vae,

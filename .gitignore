@@ -143,3 +143,6 @@ checkpoints
 # log files
 logs
 run
+
+# experiment configuration files
+local_exp_conf

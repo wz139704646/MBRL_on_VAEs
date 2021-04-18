@@ -19,7 +19,7 @@ def load_config_yaml(filepath):
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             cfg = f.read()
-            cfg = yaml.load(cfg, Loader=yaml.FullLoader)
+            cfg = yaml.unsafe_load(cfg)
 
             cfg_map = {}
             if 'general' in cfg:

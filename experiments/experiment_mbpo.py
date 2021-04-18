@@ -20,7 +20,6 @@ from storages import SimpleUniversalBuffer as Buffer, MixtureBuffer
 from utils.exp import plot_losses, set_seed, get_seed, log_and_write
 
 
-# TODO: finish the config design
 class MBPOExperiment(BaseExperiment):
     """VAE training and testing (basic) experiment"""
 
@@ -207,6 +206,9 @@ class MBPOExperiment(BaseExperiment):
             logger = self.log_comp['logger']
             writer = self.log_comp['summary_writer'] if 'summary_writer' in self.log_comp else None
 
+            logger.info('Env Observation Space Shape: {}'.format(self.real_envs.observation_space.shape))
+            logger.info('Env Action Space shape: {}'.format(self.real_envs.action_space.shape))
+            logger.info('Input States Shape: {}'.format(self.real_states.shape))
             logger.info('Dynamics Model: \n{}'.format(dynamics))
             logger.info('Actor Model: \n{}'.format(actor))
             logger.info('Critic Model: \n')

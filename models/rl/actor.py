@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Optional
+from gym.spaces import Box, MultiBinary, Discrete
 
 from .actor_layer import *
 from models.initializer import fanin_init
@@ -14,10 +15,16 @@ class Actor(nn.Module, ABC):
                  use_state_dependent_std=False, **kwargs):
         super(Actor, self).__init__()
         self.state_dim = state_dim
-        self.action_dim = action_space
+        self.action_space = action_space
         self.hidden_dims = hidden_dims
         self.use_limited_entropy = use_limited_entropy
         self.use_tanh_squash = use_tanh_squash
+
+        if isinstance(action_space, Box) or isinstance(action_space, MultiBinary):
+            self.action_dim = action_space.shape[0]
+        else:
+            assert isinstance(action_space, Discrete)
+            self.action_dim = action_space.n
 
         mlp_kwargs = kwargs.copy()
         mlp_kwargs['activation'] = kwargs.get('activation', 'relu')
@@ -27,7 +34,7 @@ class Actor(nn.Module, ABC):
 
         self.state_normalizer = state_normalizer or nn.Identity()
 
-        self.actor_layer = TanhGaussainActorLayer(hidden_dims[-1], action_space.shape[0],
+        self.actor_layer = TanhGaussainActorLayer(hidden_dims[-1], self.action_dim,
                                                   use_state_dependent_std)
 
         def init_(m): init(m, fanin_init, lambda x: nn.init.constant_(x, 0))

@@ -56,19 +56,6 @@ class RDynamics(BaseDynamics, ABC):
         return weight_decay
 
 
-class VAERDynamics(BaseDynamics, ABC):
-    """RDynamics using VAEs version"""
-    def __init__(self, state_dim: int, action_dim: int, reward_dim: int, hidden_dims: List[int], output_state_dim=None,
-                 **kwargs):
-        super(VAERDynamics, self).__init__()
-
-    def forward(self, states, actions):
-        pass
-
-    def predict(self, states, actions, **kwargs):
-        pass
-
-
 class EnsembleRDynamics(BaseDynamics, ABC):
     def __init__(self,  state_dim: int, action_dim: int, reward_dim: int, hidden_dims: List[int],
                  num_networks, num_elite_networks, state_normalizer=None, action_normalizer=None):
@@ -178,32 +165,3 @@ class EnsembleRDynamics(BaseDynamics, ABC):
             best_epochs.append(epoch)
         return best_epochs
 
-
-class EnsembleVAERDynamics(BaseDynamics, ABC):
-    def __init__(self,  state_dim: int, action_dim: int, reward_dim: int, hidden_dims: List[int],
-                 num_networks, num_elite_networks, state_normalizer=None, action_normalizer=None):
-        super(EnsembleVAERDynamics, self).__init__()
-
-    def load(self, load_path):
-        pass
-
-    def forward(self, states, actions) -> Dict[str, torch.Tensor]:
-        pass
-
-    def compute_l2_loss(self, l2_loss_coefs: Union[float, List[float]]) -> torch.Tensor:
-        pass
-
-    def update_elite_indices(self, losses: torch.Tensor) -> np.ndarray:
-        pass
-
-    def predict(self, states: torch.Tensor, actions: torch.Tensor, deterministic=False) -> Dict[str, torch.Tensor]:
-        pass
-
-    def update_best_snapshots(self, losses: torch.Tensor, epoch: int) -> bool:
-        pass
-
-    def reset_best_snapshots(self) -> None:
-        pass
-
-    def load_best_snapshots(self) -> List[int]:
-        pass

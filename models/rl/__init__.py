@@ -7,6 +7,7 @@ import torch
 from .actor import Actor
 from .critic import QCritic
 from .dynamics import RDynamics, EnsembleRDynamics
+from .term_fn import TerminationFn
 
 
 setattr(torch, 'identity', lambda x: x)

@@ -5,8 +5,8 @@ from typing import Optional, TYPE_CHECKING
 from gym.wrappers import TimeLimit
 import torch
 
-from .virtual_env import VecVirtualEnv
-from .benchmarking_envs.benchmarking_envs import make_benchmarking_env
+from .virtual_env import VecVirtualEnv, FakeEnv
+from .benchmarking_envs.benchmarking_envs import make_benchmarking_env, make_atari_env
 from thirdparty.base_vec_env import VecEnvWrapper
 from thirdparty.dummy_vec_env import DummyVecEnv
 from thirdparty.subproc_vec_env import SubprocVecEnv
@@ -15,6 +15,7 @@ from thirdparty.monitor import Monitor
 
 if TYPE_CHECKING:
     from models.rl.dynamics import BaseDynamics
+    from models.rl.term_fn import TerminationFn
 
 
 def make_env(env_id, seed, rank, log_dir, allow_early_resets, max_episode_steps):
@@ -25,6 +26,22 @@ def make_env(env_id, seed, rank, log_dir, allow_early_resets, max_episode_steps)
         env.seed(seed + rank)
         log_dir_ = os.path.join(log_dir, str(rank)) if log_dir is not None else log_dir
         env = Monitor(env, log_dir_, allow_early_resets=allow_early_resets)
+
+        return env
+
+    return _thunk
+
+
+def make_env_atari(env_id, seed, rank, log_dir, allow_early_resets):
+    """return the function to make a new atari env"""
+    def _thunk():
+        env = make_atari_env(env_id)
+
+        env.seed(seed + rank)
+        new_log_dir = os.path.join(log_dir, str(rank)) if log_dir is not None else log_dir
+        if new_log_dir and not os.path.exists(new_log_dir):
+            os.makedirs(new_log_dir)
+        env = Monitor(env, new_log_dir, allow_early_resets)
 
         return env
 
@@ -63,6 +80,38 @@ def make_vec_envs(env_name: str,
     return envs
 
 
+def make_vec_atari_envs(env_name: str,
+                        seed: int,
+                        num_envs: int,
+                        gamma: Optional[int],
+                        log_dir: Optional[str],
+                        device: torch.device,
+                        allow_early_resets: bool,
+                        norm_reward=True,
+                        ):
+    """make vectorized environments"""
+    num_envs = num_envs or 1
+    envs = [
+        make_env_atari(env_name, seed, i, log_dir, allow_early_resets)
+        for i in range(num_envs)
+    ]
+
+    if len(envs) > 1:
+        envs = SubprocVecEnv(envs)
+    else:
+        envs = DummyVecEnv(envs)
+
+    if len(envs.observation_space.shape) == 1:
+        if gamma is None:
+            envs = VecNormalize(envs, norm_reward=False, norm_obs=False)
+        else:
+            envs = VecNormalize(envs, gamma=gamma, norm_reward=norm_reward, norm_obs=False)
+
+    envs = VecPyTorch(envs, device)
+
+    return envs
+
+
 def make_vec_virtual_envs(env_name: str,
                           dynamics: BaseDynamics,
                           seed: int,
@@ -84,6 +133,11 @@ def make_vec_virtual_envs(env_name: str,
     envs = VecPyTorch(envs, device)
 
     return envs
+
+
+def make_fake_env(dynamics: BaseDynamics, term_fn: TerminationFn):
+    """return fake env which only do transition data generation"""
+    return FakeEnv(dynamics, term_fn)
 
 
 class VecPyTorch(VecEnvWrapper):

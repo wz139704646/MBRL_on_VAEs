@@ -6,6 +6,6 @@ from .base import BaseVAE
 from .vae import VAE, ConvVAE
 from .beta_vae import BetaVAE, ConvBetaVAE
 from .beta_tcvae import BetaTCVAE, ConvBetaTCVAE
-from .factor_vae import FactorVAE
-from .sparse_vae import SparseVAE
+from .factor_vae import FactorVAE, ConvFactorVAE
+from .sparse_vae import SparseVAE, ConvSparseVAE
 from .joint_vae import ConvJointVAE

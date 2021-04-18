@@ -9,6 +9,7 @@ class GeneralConfiguration(BaseConfiguration):
         super(GeneralConfiguration, self).__init__(**kwargs)
         # default values
         self.seed = 1 # random seed
+        self.debug = False # debug flag
 
         self.set_necessary_configs(**kwargs)
         self.set_unnecessary_configs(**kwargs)
@@ -21,3 +22,5 @@ class GeneralConfiguration(BaseConfiguration):
         """set general configs that not necessarily provided by user"""
         if "seed" in kwargs:
             self.seed = kwargs["seed"]
+        if "debug" in kwargs:
+            self.debug = kwargs["debug"]

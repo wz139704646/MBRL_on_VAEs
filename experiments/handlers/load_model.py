@@ -29,7 +29,7 @@ def load_extra_setting_error(model, extra_args):
 
 load_extra_setting_handlers = {
     "VAE": load_extra_setting_vae,
-    "ConVAE": load_extra_setting_vae,
+    "ConvVAE": load_extra_setting_vae,
     "BetaVAE": load_extra_setting_vae,
     "ConvBetaVAE": load_extra_setting_vae,
     "BetaTCVAE": load_extra_setting_vae,

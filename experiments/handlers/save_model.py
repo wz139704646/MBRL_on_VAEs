@@ -23,7 +23,7 @@ def get_extra_setting_joint_vae(model):
 
 get_extra_setting_handlers = {
     "VAE": get_extra_setting_vae,
-    "ConVAE": get_extra_setting_vae,
+    "ConvVAE": get_extra_setting_vae,
     "BetaVAE": get_extra_setting_vae,
     "ConvBetaVAE": get_extra_setting_vae,
     "BetaTCVAE": get_extra_setting_vae,

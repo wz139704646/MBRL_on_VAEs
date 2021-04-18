@@ -176,7 +176,7 @@ def latent_traversal_error(model, base_codes, save_cfg, **kwargs):
 
 latent_traversal_handlers = {
     "VAE": latent_traversal_vae,
-    "ConVAE": latent_traversal_vae,
+    "ConvVAE": latent_traversal_vae,
     "BetaVAE": latent_traversal_vae,
     "ConvBetaVAE": latent_traversal_vae,
     "BetaTCVAE": latent_traversal_vae,

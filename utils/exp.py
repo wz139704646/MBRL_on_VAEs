@@ -5,6 +5,7 @@ import logging
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from torch.autograd import Variable
 
 
 def plot_losses(losses, save_path=None, layout='v'):
@@ -136,3 +137,24 @@ def log_and_write(log_infos, global_step, logger, writer=None):
         logger.info('{}: {}'.format(k.split('/')[-1], log_infos[k]))
         if writer and k.find('/') > -1:
             writer.add_scalar(k, log_infos[k], global_step=global_step)
+
+
+def wrap_discrete_to_onehot(ac, onehot_shape):
+    """wrap the discrete action to onehot representation
+    :param ac: discrete action value
+    :param shape: disred onehot action shape
+    """
+    act = np.zeros(onehot_shape)
+    act[ac] = 1.
+
+    return act
+
+
+def unwrap_onehot_to_discrete(wrapped):
+    """unwrap the onehot representation to discrete action"""
+    if len(wrapped.shape) == 1:
+        # single action
+        return np.argmax(wrapped)
+    else:
+        # a sequence of actions
+        return np.array([[np.argmax(onehot)] for onehot in wrapped])

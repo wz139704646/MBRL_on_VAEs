@@ -150,13 +150,13 @@ class VAEsExperiment(BaseExperiment):
 
                     # tensorboard logging
                     if writer is not None:
-                        writer.add_scalar("[loss/train] " + k, avg_loss[k], epoch-1)
+                        writer.add_scalar("loss/train " + k, avg_loss[k], epoch-1)
 
                 test_loss = self.test(epoch)
                 # tensorboard logging
                 if writer is not None:
                     for k in test_loss.keys():
-                        writer.add_scalar("[loss/test]" + k, test_loss[k], epoch-1)
+                        writer.add_scalar("loss/test" + k, test_loss[k], epoch-1)
 
                 # updates after each epoch
                 self.model.update_epoch()

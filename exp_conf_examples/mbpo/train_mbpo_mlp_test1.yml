@@ -8,7 +8,7 @@ rl:
   env:
     env_name: 'MountainCar'
     max_episode_steps: 500
-    num_real_envs: 1
+    num: 1
     gamma: 0.99
   save_model_config:
     default_dir: './checkpoints'

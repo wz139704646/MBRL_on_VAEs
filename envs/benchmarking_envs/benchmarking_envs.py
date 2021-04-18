@@ -33,6 +33,8 @@ from .gym import gym_cartpoleO001
 # from .gym import gym_nostopslimhumanoid
 # from .gym import gym_slimhumanoid
 
+from utils.wrappers_test import make_atari, wrap_deepmind, wrap_pytorch
+
 
 def make_benchmarking_env(env_id: str):
     envs = {
@@ -81,3 +83,6 @@ def make_benchmarking_env(env_id: str):
         env.metadata = {}
     return env
 
+
+def make_atari_env(env_name):
+    return wrap_pytorch(wrap_deepmind(make_atari(env_name), scale=True))

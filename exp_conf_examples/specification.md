@@ -82,5 +82,15 @@ Based on pytorch
     save_result_config: 保存结果相关参数，同之前 test 下的 save_config
     model_load_path: 加载已保存的模型的路径
     buffer_load_path: 加载已保存 buffer 的路径
+    encoding_load_path: 加载已保存encoding model(vae)的路径
+    encoding_config: 对环境的观测进行先一步编码的相关设置(使用VAE) (无改配置或该配置为None表示不进行编码)
+        max_update_steps: 每一次训练进行的更新次数的最大值
+        max_test_steps: 每一次训练后的测试次数的最大值
+        division: 模型训练时对不同数据集的划分
+        batch_size: vae 更新使用的数据 batch size
+        model_config: 模型配置参数，同之前的最外层model字段(可无input_size, 代码将使用环境的observation space获取维度信息)
+        train_config: 模型训练参数，同之前的最外层train字段 (其中的epoch字段用于初始的多次训练)
+        test_config: 模型测试参数，同之前的最外层test字段
+
 
 

@@ -13,6 +13,7 @@ from thirdparty.base_vec_env import VecEnv
 
 if TYPE_CHECKING:
     from models.rl.dynamics import BaseDynamics
+    from models.rl.term_fn import TerminationFn
 
 
 class BaseModelBasedEnv(gym.Env):
@@ -145,3 +146,21 @@ class VecVirtualEnv(VecEnv, ABC):
     def env_method(self, method_name, *method_args, indices: Optional[np.array] = None, **method_kwargs):
         raise NotImplemented
 
+
+class FakeEnv():
+    """class that act as a fake environment with only a step function implemented"""
+
+    def __init__(self, dynamics: BaseDynamics, term_fn: TerminationFn):
+        self.dynamics = dynamics
+        self.term_fn = term_fn
+        self.device = next(self.dynamics.parameters()).device
+
+    def step(self, states, actions, **kwargs):
+        """step in the fake env and return the predict data"""
+        with torch.no_grad():
+            next_states, rewards = itemgetter('next_states', 'rewards')(self.dynamics.predict(
+                states.to(self.device), actions.to(self.device), **kwargs))
+            termination = self.term_fn(states, actions, next_states)
+            dones = self.term_fn.done(termination, to_bool=True)
+
+        return next_states, rewards, dones, {}
