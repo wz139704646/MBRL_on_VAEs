@@ -2,8 +2,9 @@
 import torch
 import random
 import logging
-import matplotlib
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 

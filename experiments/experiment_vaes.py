@@ -2,7 +2,6 @@
 import os
 import time
 import torch
-import matplotlib.pyplot as plt
 
 from models.vaes import *
 from base_experiment import BaseExperiment

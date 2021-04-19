@@ -5,7 +5,6 @@ import datetime
 import torch
 import torch.autograd
 import numpy as np
-import matplotlib.pyplot as plt
 from operator import itemgetter
 from collections import deque
 

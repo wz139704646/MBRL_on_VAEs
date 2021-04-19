@@ -4,6 +4,8 @@ import time
 import copy
 import torch
 import random
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 from base_experiment import BaseExperiment
