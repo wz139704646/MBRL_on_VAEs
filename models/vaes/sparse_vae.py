@@ -317,6 +317,6 @@ class ConvSparseVAE(BaseVAE):
             "PRIOR": PRIOR}
 
     def update_epoch(self):
-        """warm-up strategy gradually increasing c during training"""
+        """warm-up strategy gradually increasing c and beta during training"""
         self.c += self.delta_c
         self.beta += self.delta_beta

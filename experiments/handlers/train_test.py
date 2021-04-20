@@ -160,14 +160,16 @@ def train_factor_vae(model, optimizer, train_loader, train_args, epoch, log_comp
                 train_loss[stored_key] = loss_dict[k].item()
 
         vae_loss = loss_dict["loss"] # final loss
-        vae_loss.backward(retain_graph=True)
+        vae_loss.backward()
         optimizer_vae.step()
 
         # train discriminator
         optimizer_disc.zero_grad()
-        Dz = res[2] # use the previous result of vae
+        z = res[2].detach() # avoid tracing to vae again
         z_prime = model(data2.clone(), no_dec=True)
-        Dz_pperm = model.disc_permute_z(z_prime)
+        z_pperm = model.permute_dims(z_prime).detach()
+        Dz = model.discriminator(z)
+        Dz_pperm = model.discriminator(z_pperm)
         loss_args["optim_part"] = "discriminator"
         loss_dict = model.loss_function(Dz, Dz_pperm, **loss_args)
 
@@ -267,14 +269,16 @@ def train_factor_vae_with_kv_generator(model, optimizer, gen, gen_key, num_batch
                 train_loss[stored_key] = loss_dict[k].item()
 
         vae_loss = loss_dict["loss"] # final loss
-        vae_loss.backward(retain_graph=True)
+        vae_loss.backward()
         optimizer_vae.step()
 
         # train discriminator
         optimizer_disc.zero_grad()
-        Dz = res[2] # use the previous result of vae
+        z = res[2].detach() # avoid tracing to vae again
         z_prime = model(data2.clone(), no_dec=True)
-        Dz_pperm = model.disc_permute_z(z_prime)
+        z_pperm = model.permute_dims(z_prime).detach()
+        Dz = model.discriminator(z)
+        Dz_pperm = model.discriminator(z_pperm)
         loss_args["optim_part"] = "discriminator"
         loss_dict = model.loss_function(Dz, Dz_pperm, **loss_args)
 
@@ -315,7 +319,7 @@ def train_factor_vae_with_kv_generator(model, optimizer, gen, gen_key, num_batch
     logger.info('=====> Factor VAE Train Step: {} Average loss: {}'.format(
         global_step, avg_loss
     ))
-    logger.info('=====> Factor VAE Train Steo: {} Discriminator accuracy: {}'.format(
+    logger.info('=====> Factor VAE Train Step: {} Discriminator accuracy: {}'.format(
         global_step, avg_D_acc
     ))
 
@@ -492,9 +496,11 @@ def test_factor_vae(model, test_loader, train_args, test_args, epoch, log_comp, 
                     test_loss[stored_key] = loss_dict[k]
 
             # discriminator loss testing
-            Dz = res[2]
+            z = res[2]
             z_prime = model(data2.clone(), no_dec=True)
-            Dz_pperm = model.disc_permute_z(z_prime)
+            z_pperm = model.permute_dims(z_prime)
+            Dz = model.discriminator(z)
+            Dz_pperm = model.discriminator(z_pperm)
             loss_args["optim_part"] = "discriminator"
             loss_dict = model.loss_function(Dz, Dz_pperm, **loss_args)
 
@@ -577,8 +583,8 @@ def test_factor_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_si
 
     with torch.no_grad():
         for i in range(num_batches):
-            data1 = itemgetter(gen_key)(gen[0])
-            data2 = itemgetter(gen_key)(gen[1])
+            data1 = itemgetter(gen_key)(next(gen[0]))
+            data2 = itemgetter(gen_key)(next(gen[1]))
             data1 = data1.to(train_args.extra["device"])
             data2 = data2.to(train_args.extra["device"])
 
@@ -595,9 +601,11 @@ def test_factor_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_si
                     test_loss[stored_key] = loss_dict[k]
 
             # discriminator loss testing
-            Dz = res[2]
+            z = res[2]
             z_prime = model(data2.clone(), no_dec=True)
-            Dz_pperm = model.disc_permute_z(z_prime)
+            z_pperm = model.permute_dims(z_prime)
+            Dz = model.discriminator(z)
+            Dz_pperm = model.discriminator(z_pperm)
             loss_args["optim_part"] = "discriminator"
             loss_dict = model.loss_function(Dz, Dz_pperm, **loss_args)
 

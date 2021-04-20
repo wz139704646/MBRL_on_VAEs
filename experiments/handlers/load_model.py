@@ -14,6 +14,12 @@ def load_extra_setting_sparse_vae(model, extra_args):
     model.c = extra_args["model_c"]
 
 
+def load_extra_setting_conv_sparse_vae(model, extra_args):
+    """load the saved extra args for conv sparse VAE object"""
+    model.c = extra_args["model_c"]
+    model.beta = extra_args["model_beta"]
+
+
 def load_extra_setting_joint_vae(model, extra_args):
     """load the saved extra args for joint VAE object"""
     if "cont_cap" in extra_args:
@@ -37,7 +43,7 @@ load_extra_setting_handlers = {
     "FactorVAE": load_extra_setting_vae,
     "ConvFactorVAE": load_extra_setting_vae,
     "SparseVAE": load_extra_setting_sparse_vae,
-    "ConvSparseVAE": load_extra_setting_sparse_vae,
+    "ConvSparseVAE": load_extra_setting_conv_sparse_vae,
     "JointVAE": load_extra_setting_joint_vae,
     "ConvJointVAE": load_extra_setting_joint_vae
 }

@@ -1,0 +1,104 @@
+_tag_name: &tag mbpo_vae_test_bug
+general:
+  seed: 1
+  debug: true
+rl:
+  device: 'cpu'
+  log_interval: 10
+  eval_interval: 1
+  save_interval: 2
+  env:
+    env_name: &envname 'PongNoFrameskip-v0'
+    max_episode_steps: 50
+    num_real_envs: 1
+    gamma: 0.99
+  save_model_config:
+    default_dir: './checkpoints'
+    path: !!python/object/apply:os.path.join [*envname, *tag]
+    store_cfgs:
+      - rl
+  save_result_config:
+    default_dir: !!python/object/apply:os.path.join ['./results', *envname, *tag]
+  algos:
+    mbpo:
+      num_total_epochs: 3
+      dynamics_hidden_dims: [200, 200, 200, 200]
+      termination_fn_hidden_dims: [200, 200, 200, 200]
+      l2_loss_coefs: [0.000025, 0.00005, 0.000075, 0.000075, 0.0001]
+      lr: 1.0e-3
+      term_lr: 1.0e-3
+      dynamics_batch_size: 64
+      num_dynamics_networks: 7
+      num_elite_dynamics_networks: 5
+      real_buffer_size: 1280
+      rollout_batch_size: 100
+      num_model_retain_epochs: 1
+      model_update_interval: 10
+      rollout_schedule: [ 5, 15, 1, 1 ]
+      max_num_epochs: 5
+      real_sample_ratio: 0.
+      num_warmup_samples: 500
+      encoder_update_interval: [ 0, 1, 10, 25 ]
+    sac:
+      actor_hidden_dims: [256, 256]
+      critic_hidden_dims: [256, 256]
+      num_grad_steps: 10
+      batch_size: 64
+      target_entropy: -3
+      actor_lr: 3.0e-4
+      critic_lr: 3.0e-4
+      soft_target_tau: 5.0e-3
+  encoding_config:
+    max_update_steps: 20
+    max_test_steps: 5
+    division: [0.7, 0.3]
+    batch_size: 64
+    model_config:
+      model_name: ConvJointVAE
+      model_args:
+        kernel_sizes: [32, 64, 64]
+        hidden_size: 256
+        latent_disc: [ 10 ]
+        disc_capacity: [ 0, 8, 2.0e-4, 100 ]
+        cont_capacity: [ 0, 20, 5.0e-4, 100 ]
+        dim_z: 25 # state dim
+        binary: true
+    train_config:
+      epochs: 5
+      cuda: false
+      log_interval: 20
+      optimizer_config:
+        lr: 1.0e-3
+      save_config:
+        default_dir: './checkpoints'
+        path: !!python/object/apply:os.path.join [*envname, *tag, 'encoding_model.pth.tar']
+    test_config:
+      save_config:
+        tag: *tag
+log:
+  logger_config:
+    dict:
+      version: 1
+      formatters:
+        default:
+          format: "[%(levelname)s] %(asctime)s-%(filename)s-%(name)s  %(message)s"
+      handlers:
+        console:
+          class: logging.StreamHandler
+          level: DEBUG
+          formatter: default
+          stream: ext://sys.stdout
+      loggers:
+        exp:
+          level: DEBUG
+          handlers:
+            - console
+          propagate: false
+      root:
+        level: INFO
+        handlers:
+          - console
+  summary_writer_config:
+    log_dir: !!python/object/apply:os.path.join ['./run/mbpo', *tag]
+    comment: *tag
+

@@ -70,7 +70,7 @@ class FactorVAE(BaseVAE):
             # no decoding
             return z
 
-        return self.decode(z), encoded, self.discriminator(z)
+        return self.decode(z), encoded, z
 
     def decoded_to_output(self, decoded, **kwargs):
         """vae transform decoded result to output"""
@@ -94,13 +94,6 @@ class FactorVAE(BaseVAE):
 
         return torch.cat(permuted, dim=1)
 
-    def disc_permute_z(self, z):
-        """discriminator permute and forward computation"""
-        z_perm = self.permute_dims(z).detach() # avoid updating
-        Dz_perm = self.discriminator(z_perm)
-
-        return Dz_perm
-
     def loss_function(self, *inputs, **kwargs):
         """loss function described in the paper (eq. (2))"""
         optim_part = kwargs['optim_part'] # the part to optimize
@@ -109,7 +102,7 @@ class FactorVAE(BaseVAE):
             # update VAE
             decoded = inputs[0]
             encoded = inputs[1]
-            Dz = inputs[2]
+            z = inputs[2]
             x = inputs[3]
             mu, logvar = encoded
 
@@ -125,6 +118,7 @@ class FactorVAE(BaseVAE):
                     loc=mu_o, scale=torch.exp(0.5*logvar_o))
                 MLD = -recon_x_distribution.log_prob(x).sum(1).mean()
 
+            Dz = self.discriminator(z)
             tc_loss = (Dz[:, :1] - Dz[:, 1:]).mean()
 
             return {
@@ -136,7 +130,7 @@ class FactorVAE(BaseVAE):
             # update discriminator
             Dz = inputs[0]
             Dz_pperm = inputs[1]
-            device = Dz.device
+            device = z.device
 
             ones = torch.ones(
                 Dz.size(0), dtype=torch.long, requires_grad=False).to(device)
@@ -206,9 +200,9 @@ class ConvFactorVAE(BaseVAE):
 
         if no_dec:
             # no decoding
-            return z
+            return z.clone() # avoid inplace operation
 
-        return self.decode(z), encoded, self.discriminator(z)
+        return self.decode(z), encoded, z
 
     def sample_latent(self, num, device, **kwargs):
         """vae sample latent"""
@@ -239,13 +233,6 @@ class ConvFactorVAE(BaseVAE):
             permuted.append(z[:, i][ind].view(-1, 1))
 
         return torch.cat(permuted, dim=1)
-
-    def disc_permute_z(self, z):
-        """discriminator permute and forward computation"""
-        z_perm = self.permute_dims(z).detach()
-        Dz_perm = self.discriminator(z_perm)
-
-        return Dz_perm
 
     def loss_function(self, *inputs, **kwargs):
         """loss function described in the paper (eq. (2))"""

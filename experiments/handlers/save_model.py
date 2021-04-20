@@ -10,6 +10,14 @@ def get_extra_setting_sparse_vae(model):
     }
 
 
+def get_extra_setting_conv_sparse_vae(model):
+    """return the saved extra args for conv sparse VAE object"""
+    return {
+        "model_c": model.c,
+        "model_beta": model.beta
+    }
+
+
 def get_extra_setting_joint_vae(model):
     """load the saved extra args for joint VAE object"""
     extra = {}
@@ -31,7 +39,7 @@ get_extra_setting_handlers = {
     "FactorVAE": get_extra_setting_vae,
     "ConvFactorVAE": get_extra_setting_vae,
     "SparseVAE": get_extra_setting_sparse_vae,
-    "ConvSparseVAE": get_extra_setting_sparse_vae,
+    "ConvSparseVAE": get_extra_setting_conv_sparse_vae,
     "JointVAE": get_extra_setting_joint_vae,
     "ConvJointVAE": get_extra_setting_joint_vae
 }
