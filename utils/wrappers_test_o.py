@@ -138,7 +138,7 @@ class ClipRewardEnv(gym.RewardWrapper):
 
 
 class WarpFrame(gym.ObservationWrapper):
-    def __init__(self, env, width=64, height=64, grayscale=True, dict_space_key=None):
+    def __init__(self, env, width=64, height=64, grayscale=False, dict_space_key=None):
         """
         Warp frames to 84x84 as done in the Nature paper and later work.
 
@@ -277,7 +277,7 @@ def make_atari(env_id):
     env = MaxAndSkipEnv(env, skip=4)
     return env
 
-def wrap_deepmind(env, episode_life=True, clip_rewards=True, frame_stack=False, scale=False):
+def wrap_deepmind(env, episode_life=True, clip_rewards=True, frame_stack=True, scale=False):
     """Configure environment for DeepMind-style Atari.
     """
     if episode_life:
