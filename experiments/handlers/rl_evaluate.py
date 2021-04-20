@@ -65,7 +65,7 @@ def evaluate_atari(actor, env_name, seed, num_episode, eval_log_dir, device,
 
         if isinstance(action_space, Discrete):
             # unwrap onehot action
-            actions = torch.tensor(unwrap_onehot_to_discrete(actions))
+            actions = torch.tensor(unwrap_onehot_to_discrete(actions.cpu()))
 
         states, _, _, infos = eval_envs.step(actions)
         states = wrap_obs_state(obs)

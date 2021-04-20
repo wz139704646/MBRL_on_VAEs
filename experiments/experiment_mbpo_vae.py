@@ -182,7 +182,7 @@ class MBPOVAEsExperiment(BaseExperiment):
         """tansform the action to the raw to use in the env"""
         if len(self.action_space.shape) == 0:
             # convert to discrete action
-            return torch.tensor(unwrap_onehot_to_discrete(wrapped_action))
+            return torch.tensor(unwrap_onehot_to_discrete(wrapped_action.cpu()))
         else:
             return wrapped_action
 
@@ -451,7 +451,9 @@ class MBPOVAEsExperiment(BaseExperiment):
             #               torch.zeros(self.real_envs.action_space.shape))
             if self.encoding:
                 logger.info('Encoding Model: \n{}'.format(self.encoding_model))
-                writer.add_graph(self.encoding_model, torch.zeros(1, *self.encoding_model.input_size))
+                writer.add_graph(
+                    self.encoding_model, torch.zeros(
+                        1, *self.encoding_model.input_size).to(self.device))
             # writer.add_graph(dynamics, fake_input)
             # writer.add_graph(actor, torch.zeros(self.real_envs.observation_space.shape))
             # writer.add_graph(q_critic1, fake_input)
