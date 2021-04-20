@@ -145,7 +145,7 @@ def wrap_discrete_to_onehot(ac, onehot_shape):
     :param ac: discrete action value
     :param shape: disred onehot action shape
     """
-    act = np.zeros(onehot_shape)
+    act = np.zeros(onehot_shape, dtype=np.float32)
     act[ac] = 1.
 
     return act

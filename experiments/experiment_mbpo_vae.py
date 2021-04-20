@@ -6,7 +6,7 @@ import torch
 import torch.autograd
 import numpy as np
 from operator import itemgetter
-from collections import deque
+from collections import deque, Iterable
 
 from algos import *
 from models.rl import *
@@ -281,6 +281,29 @@ class MBPOVAEsExperiment(BaseExperiment):
         self.real_buffer.insert(states=recent_states, actions=recent_actions, rewards=recent_rewards,
                                 masks=recent_masks, next_states=recent_next_states)
 
+    def get_encode_update_interval(self, epoch):
+        """get the encoder update interval (steps) from config and current epoch"""
+        rl_cfg = self.exp_configs['rl']
+        algos_cfg = rl_cfg.algos
+        mbpo_cfg = algos_cfg['mbpo']
+
+        encoder_interval = mbpo_cfg['encoder_update_interval']
+
+        if isinstance(encoder_interval, Iterable):
+            # schedule the update interval
+            min_ep, max_ep, st_steps, en_steps = encoder_interval
+            if epoch <= min_ep:
+                interval = st_steps
+            else:
+                delta = (epoch - min_ep) / (max_ep - min_ep)
+                delta = min(delta, 1)
+                interval = st_steps + (en_steps - st_steps) * delta
+        else:
+            # fixed interval
+            interval = encoder_interval
+
+        return interval
+
     def before_run(self, **kwargs):
         """preparations needed be done before run the experiment"""
         try:
@@ -455,13 +478,16 @@ class MBPOVAEsExperiment(BaseExperiment):
 
                 # update rollout length k
                 self.model.update_rollout_length(epoch)
+                # get encoder update interval
+                if self.encoding:
+                    encode_update_int = self.get_encode_update_interval(epoch)
 
                 for i in range(env_cfg.max_episode_steps):
                     self.losses = {}
 
                     # record the normalizer missing updates
                     normalizer_update_samples = 0
-                    if self.encoding and i % mbpo_cfg['encoder_update_interval'] == 0:
+                    if self.encoding and i % encode_update_int == 0:
                         # update encoding model
                         self.update_encoding_model()
 

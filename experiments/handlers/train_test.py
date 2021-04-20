@@ -357,7 +357,7 @@ def test_vae(model, test_loader, train_args, test_args, epoch, log_comp, save=Tr
                 # reconstruction testing
                 recon_batch = model.reconstruct(data)
                 n = min(data.size(0), 4)
-                if len(model.input_size) > 2:
+                if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                     comparison = torch.cat([data[:n, :3], recon_batch[:n, :3]])
                 else:
                     comparison = torch.cat([data[:n], recon_batch[:n]])
@@ -372,7 +372,7 @@ def test_vae(model, test_loader, train_args, test_args, epoch, log_comp, save=Tr
         if save and test_args.save_config:
             # sampling testing
             sample = model.sample(16, test_args.extra["device"]).cpu()
-            if len(model.input_size) > 2:
+            if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                 sample = sample[:, :3]
             filename = "sample_{}.png".format(epoch)
             filename = test_args.save_config.tag + "-" + filename \
@@ -424,7 +424,7 @@ def test_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_size,
                 # reconstruction testing
                 recon_batch = model.reconstruct(data)
                 n = min(data.size(0), 4)
-                if len(model.input_size) > 2:
+                if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                     comparison = torch.cat([data[:n, :3], recon_batch[:n, :3]])
                 else:
                     comparison = torch.cat([data[:n], recon_batch[:n]])
@@ -439,7 +439,7 @@ def test_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_size,
         if save and test_args.save_config:
             # sampling testing
             sample = model.sample(16, test_args.extra["device"]).cpu()
-            if len(model.input_size) > 2:
+            if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                 sample = sample[:, :3]
             filename = "sample_{}.png".format(global_step)
             filename = test_args.save_config.tag + "-" + filename \
@@ -516,7 +516,7 @@ def test_factor_vae(model, test_loader, train_args, test_args, epoch, log_comp, 
                 # reconstruction testing
                 recon_batch = model.reconstruct(data1)
                 n = min(data1.size(0), 4)
-                if len(model.input_size) > 2:
+                if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                     comparison = torch.cat([data1[:n, :3], recon_batch[:n, :3]])
                 else:
                     comparison = torch.cat([data1[:n], recon_batch[:n]])
@@ -531,7 +531,7 @@ def test_factor_vae(model, test_loader, train_args, test_args, epoch, log_comp, 
         if save and test_args.save_config:
             # sampling testing
             sample = model.sample(16, test_args.extra["device"]).cpu()
-            if len(model.input_size) > 2:
+            if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                 sample = sample[:, :3]
             filename = "sample_{}.png".format(epoch)
             filename = test_args.save_config.tag + "-" + filename \
@@ -619,7 +619,7 @@ def test_factor_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_si
                 # reconstruction testing
                 recon_batch = model.reconstruct(data1)
                 n = min(data1.size(0), 4)
-                if len(model.input_size) > 2:
+                if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                     comparison = torch.cat([data1[:n, :3], recon_batch[:n, :3]])
                 else:
                     comparison = torch.cat([data1[:n], recon_batch[:n]])
@@ -634,7 +634,7 @@ def test_factor_vae_with_kv_generator(model, gen, gen_key, num_batches, batch_si
         if save and test_args.save_config:
             # sampling testing
             sample = model.sample(16, test_args.extra["device"]).cpu()
-            if len(model.input_size) > 2:
+            if len(model.input_size) > 2 and model.input_size[0] % 3 == 0:
                 sample = sample[:, :3]
             filename = "sample_{}.png".format(global_step)
             filename = test_args.save_config.tag + "-" + filename \
