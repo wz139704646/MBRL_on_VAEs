@@ -7,7 +7,7 @@ from experiments.experiment_mbpo_vae import MBPOVAEsExperiment
 
 def parse_args():
     """parse command line arguments"""
-    desc = "MBPO experiments (training and testing)"
+    desc = "MBPO VAE experiments (training and testing)"
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('--config-file', nargs='+', type=str,
@@ -26,9 +26,9 @@ def main(args):
 
         exp.exec()
     except Exception as e:
-        logging.error("MBPO experiment encountered error: \n{}".format(e), exc_info=True)
+        logging.error("MBPO VAE experiment encountered error: \n{}".format(e), exc_info=True)
     else:
-        logging.info("MBPO experiment done")
+        logging.info("MBPO VAE experiment done")
 
 
 if __name__ == "__main__":

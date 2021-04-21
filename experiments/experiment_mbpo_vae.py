@@ -331,6 +331,7 @@ class MBPOVAEsExperiment(BaseExperiment):
                 if "input_size" not in model_args:
                     model_args["input_size"] = self.real_envs.observation_space.shape
                 self.encoding_model = eval(model_name)(**model_args)
+                self.encoding_model.to(self.device)
                 self.encoding_optimizer = adapt_configure_optimizer(
                     encoding_model_cfg.model_name, self.encoding_model, encoding_train_cfg.optimizer_config)
                 self.encoding_global_step = 0
