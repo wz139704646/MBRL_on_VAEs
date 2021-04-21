@@ -88,7 +88,7 @@ class SparseVAE(BaseVAE):
 
     def sample_latent(self, num, device, **kwargs):
         """sample from latent space and return the codes"""
-        return torch.randn(num, self.dim_z)
+        return torch.randn(num, self.dim_z).to(device)
 
     def sample(self, num, device, **kwargs):
         """sample from latent space and return the decoded output"""
@@ -255,7 +255,7 @@ class ConvSparseVAE(BaseVAE):
 
     def sample_latent(self, num, device, **kwargs):
         """sample from latent space and return the codes"""
-        return torch.randn(num, self.dim_z)
+        return torch.randn(num, self.dim_z).to(device)
 
     def sample(self, num, device, **kwargs):
         """sample from latent space and return the decoded output"""

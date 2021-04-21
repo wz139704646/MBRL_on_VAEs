@@ -163,6 +163,7 @@ class ConvJointVAE(BaseVAE):
         if self.training:
             unif = torch.rand(alpha.size())
             gumbel = -torch.log(-torch.log(unif + ConvJointVAE.EPS) + ConvJointVAE.EPS)
+            gumbel = gumbel.to(alpha.device)
             # reparameterize to create softmax sample
             log_alpha = torch.log(alpha + ConvJointVAE.EPS)
             logit = (log_alpha + gumbel) / self.temp
@@ -175,7 +176,7 @@ class ConvJointVAE(BaseVAE):
             # set the max alpha index 1
             one_hot_samples.scatter_(1, max_alpha.view(-1, 1).data.cpu(), 1)
 
-            return one_hot_samples
+            return one_hot_samples.to(alpha.device)
 
     def forward(self, input):
         """autoencoder forward computation"""
@@ -307,7 +308,7 @@ class ConvJointVAE(BaseVAE):
             and a uniform categorical distribution
         """
         dim = int(alpha.size()[-1])
-        log_dim = torch.Tensor([np.log(dim)])
+        log_dim = torch.Tensor([np.log(dim)]).to(alpha.device)
 
         # calculate negative entropy of each row
         neg_entropy = torch.sum(alpha * torch.log(alpha + ConvJointVAE.EPS), dim=1)
