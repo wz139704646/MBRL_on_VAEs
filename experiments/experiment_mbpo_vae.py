@@ -507,7 +507,7 @@ class MBPOVAEsExperiment(BaseExperiment):
                         # update predictive model
                         if normalizer_update_samples > 0:
                             recent_states, recent_actions = itemgetter('states', 'actions') \
-                                (self.real_buffer.get_recent_samples(mbpo_cfg['model_update_interval']))
+                                (self.real_buffer.get_recent_samples(normalizer_update_samples))
                             self.state_normalizer.update(recent_states)
                             self.action_normalizer.update(recent_actions)
                             normalizer_update_samples = 0
