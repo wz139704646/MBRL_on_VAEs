@@ -49,12 +49,12 @@ load_extra_setting_handlers = {
 }
 
 
-def adapt_load_model(filepath):
+def adapt_load_model(filepath, map_location=None):
     """load model file
     :param filepath: the file path of the model
     :return: a dict containing model object, config objects and others
     """
-    model_checkpoint = torch.load(filepath)
+    model_checkpoint = torch.load(filepath, map_location)
     exp_configs_dict = model_checkpoint["exp_configs"]
     model_state_dict = model_checkpoint["model_state_dict"]
     extra = model_checkpoint["extra"]
