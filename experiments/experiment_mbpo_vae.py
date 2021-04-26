@@ -148,7 +148,10 @@ class MBPOVAEsExperiment(BaseExperiment):
             self.agent.target_q_critic2.load_state_dict(q_critic_target2_sd)
         if rl_cfg.buffer_load_path:
             # virtual buffer does not need loading
-            self.real_buffer.load(rl_cfg.buffer_load_path)
+            if self.encoding:
+                self.obs_buffer.load(rl_cfg.buffer_load_path)
+            else:
+                self.real_buffer.load(rl_cfg.buffer_load_path)
         if self.encoding and rl_cfg.encoding_load_path:
             # load encoding model (vae)
             load_res = adapt_load_model(rl_cfg.encoding_load_path)
@@ -639,7 +642,10 @@ class MBPOVAEsExperiment(BaseExperiment):
             state_dicts['exp_configs'] = cfgs
 
         torch.save(state_dicts, self.save_dir + '/state_dicts.pt')
-        self.real_buffer.save(self.save_dir + '/real_buffer.pt')
+        if self.encoding:
+            self.obs_buffer.save(self.save_dir + '/real_buffer.pt')
+        else:
+            self.real_buffer.save(self.save_dir + '/real_buffer.pt')
 
         # store some extra info (e.g. epoch)
         if extra is not None:

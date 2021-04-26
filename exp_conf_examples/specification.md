@@ -83,6 +83,7 @@ Based on pytorch
     model_load_path: 加载已保存的模型的路径
     buffer_load_path: 加载已保存 buffer 的路径
     encoding_load_path: 加载已保存encoding model(vae)的路径
+    extra_load_path: 加载额外信息（如epoch）的路径
     encoding_config: 对环境的观测进行先一步编码的相关设置(使用VAE) (无改配置或该配置为None表示不进行编码)
         max_update_steps: 每一次训练进行的更新次数的最大值
         max_test_steps: 每一次训练后的测试次数的最大值
