@@ -604,7 +604,7 @@ class MBPOVAEsExperiment(BaseExperiment):
                     extra = {'epoch': self.epoch}
                     if self.encoding:
                         extra['encoding_global_step'] = self.encoding_global_step
-                    self._save()
+                    self._save(extra=extra)
         except Exception:
             raise
 
