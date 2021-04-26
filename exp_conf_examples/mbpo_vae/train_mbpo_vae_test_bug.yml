@@ -21,7 +21,7 @@ rl:
     default_dir: !!python/object/apply:os.path.join ['./results', *envname, *tag]
   algos:
     mbpo:
-      num_total_epochs: 3
+      num_total_epochs: 6
       dynamics_hidden_dims: [200, 200, 200, 200]
       termination_fn_hidden_dims: [200, 200, 200, 200]
       l2_loss_coefs: [0.000025, 0.00005, 0.000075, 0.000075, 0.0001]

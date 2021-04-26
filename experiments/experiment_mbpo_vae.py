@@ -131,15 +131,16 @@ class MBPOVAEsExperiment(BaseExperiment):
             raise
 
     def _load(self):
-        """load the trained models and buffers"""
+        """load the trained models, buffers and extra info"""
         rl_cfg = self.exp_configs['rl']
 
         if rl_cfg.model_load_path:
             state_dicts = torch.load(rl_cfg.model_load_path)
-            dynamics_sd, actor_sd, q_critic1_sd, q_critic2_sd, q_critic_target1_sd, q_critic_target2_sd = \
+            dynamics_sd, actor_sd, q_critic1_sd, q_critic2_sd, q_critic_target1_sd, q_critic_target2_sd, term_fn_sd = \
                 itemgetter('dynamics', 'actor', 'q_critic1', 'q_critic2',
-                           'q_critic_target1', 'q_critic_target2')(state_dicts)
+                           'q_critic_target1', 'q_critic_target2', 'term_fn')(state_dicts)
             self.model.dynamics.load_state_dict(dynamics_sd)
+            self.model.term_fn.load_state_dict(term_fn_sd)
             self.agent.actor.load_state_dict(actor_sd)
             self.agent.q_critic1.load_state_dict(q_critic1_sd)
             self.agent.q_critic2.load_state_dict(q_critic2_sd)
@@ -151,7 +152,13 @@ class MBPOVAEsExperiment(BaseExperiment):
         if self.encoding and rl_cfg.encoding_load_path:
             # load encoding model (vae)
             load_res = adapt_load_model(rl_cfg.encoding_load_path)
-            self.encoding_model = load_res["model"]
+            self.encoding_model = load_res['model']
+        if rl_cfg.extra_load_path:
+            # load extra info (e.g. epoch)
+            extra = torch.load(rl_cfg.extra_load_path)
+            self.epoch = extra['epoch']
+            if 'encoding_global_step' in extra:
+                self.encoding_global_step = extra['encoding_global_step']
 
     def encode(self, obs):
         """encode obs into states"""
@@ -422,6 +429,9 @@ class MBPOVAEsExperiment(BaseExperiment):
             else:
                 self.policy_buffer = self.virtual_buffer
 
+            # init epochs (start - 1)
+            self.epoch = -1
+
             # load checkpoints
             if ((not rl_cfg.model_load_path) ^ (not rl_cfg.buffer_load_path)):
                 raise Exception("partial loading model or buffer may cause error")
@@ -431,6 +441,7 @@ class MBPOVAEsExperiment(BaseExperiment):
             self.real_obs = self.real_envs.reset()
             self.real_episode_rewards = deque(maxlen=30)
             self.real_episode_lengths = deque(maxlen=30)
+            # warm up buffer
             self.warm_up()
 
             # log and summary
@@ -442,6 +453,7 @@ class MBPOVAEsExperiment(BaseExperiment):
             logger.info('Env Observation Data Shape: {}'.format(self.real_obs.size()))
             logger.info('Env State Dim: {}'.format(self.state_dim))
             logger.info('Dynamics Model: \n{}'.format(dynamics))
+            logger.info('Termination Function: \n{}'.format(term_fn))
             logger.info('Actor Model: \n{}'.format(actor))
             logger.info('Critic Model: \n')
             logger.info('1: \n{}'.format(q_critic1))
@@ -476,14 +488,15 @@ class MBPOVAEsExperiment(BaseExperiment):
             writer = self.log_comp['summary_writer'] if 'summary_writer' in self.log_comp else None
             start = time.time()
 
-            for epoch in range(mbpo_cfg['num_total_epochs']):
-                logger.info('Epoch {}:'.format(epoch))
+            start_epoch = self.epoch + 1
+            for self.epoch in range(start_epoch, mbpo_cfg['num_total_epochs']):
+                logger.info('Epoch {}:'.format(self.epoch))
 
                 # update rollout length k
-                self.model.update_rollout_length(epoch)
+                self.model.update_rollout_length(self.epoch)
                 # get encoder update interval
                 if self.encoding:
-                    encode_update_int = self.get_encode_update_interval(epoch)
+                    encode_update_int = self.get_encode_update_interval(self.epoch)
 
                 for i in range(env_cfg.max_episode_steps):
                     self.losses = {}
@@ -565,7 +578,7 @@ class MBPOVAEsExperiment(BaseExperiment):
                         # log intermediate informations
                         # keys with '/' will be recorded in the tensorboard
                         time_elapsed = time.time() - start
-                        num_env_steps = epoch * env_cfg.max_episode_steps + i + mbpo_cfg['num_warmup_samples']
+                        num_env_steps = self.epoch * env_cfg.max_episode_steps + i + mbpo_cfg['num_warmup_samples']
                         log_infos = {'/time_elapsed': time_elapsed, 'samples_collected': num_env_steps}
 
                         if len(self.real_episode_rewards) > 0:
@@ -575,7 +588,7 @@ class MBPOVAEsExperiment(BaseExperiment):
                             log_infos['loss/' + k] = self.losses[k]
                         log_and_write(log_infos, global_step=num_env_steps, logger=logger, writer=writer)
 
-                if (epoch + 1) % rl_cfg.eval_interval == 0:
+                if (self.epoch + 1) % rl_cfg.eval_interval == 0:
                     encoder = self.encoding_model if self.encoding else None
                     encode_fn = vae_encode if self.encoding else None
                     episode_rewards_real_eval, episode_lengths_real_eval = \
@@ -584,9 +597,13 @@ class MBPOVAEsExperiment(BaseExperiment):
                     log_infos = {'perf/ep_rew_real_eval': np.mean(episode_rewards_real_eval),
                                  'perf/ep_len_real_eval': np.mean(episode_lengths_real_eval)}
                     log_and_write(log_infos, logger=logger, writer=writer,
-                                  global_step=(epoch + 1) * env_cfg.max_episode_steps + mbpo_cfg['num_warmup_samples'])
+                                  global_step=(self.epoch + 1) * env_cfg.max_episode_steps + mbpo_cfg['num_warmup_samples'])
 
-                if (epoch + 1) % rl_cfg.save_interval == 0:
+                # break points
+                if (self.epoch + 1) % rl_cfg.save_interval == 0:
+                    extra = {'epoch': self.epoch}
+                    if self.encoding:
+                        extra['encoding_global_step'] = self.encoding_global_step
                     self._save()
         except Exception:
             raise
@@ -612,7 +629,8 @@ class MBPOVAEsExperiment(BaseExperiment):
                        'q_critic1': self.agent.q_critic1.state_dict(),
                        'q_critic2': self.agent.q_critic2.state_dict(),
                        'q_critic_target1': self.agent.target_q_critic1.state_dict(),
-                       'q_critic_target2': self.agent.target_q_critic2.state_dict()}
+                       'q_critic_target2': self.agent.target_q_critic2.state_dict(),
+                       'term_fn': self.model.term_fn.state_dict()}
         # store the cfgs into the state dict pack for convenience
         cfgs = {}
         for cfg_key in save_model_cfg.store_cfgs:
@@ -622,6 +640,10 @@ class MBPOVAEsExperiment(BaseExperiment):
 
         torch.save(state_dicts, self.save_dir + '/state_dicts.pt')
         self.real_buffer.save(self.save_dir + '/real_buffer.pt')
+
+        # store some extra info (e.g. epoch)
+        if extra is not None:
+            torch.save(extra, self.save_dir + '/extra.pt')
 
         if self.encoding:
             # save the encoding model (just model info and model config)

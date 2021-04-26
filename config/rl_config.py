@@ -87,6 +87,7 @@ class RLConfiguration(BaseConfiguration):
         self.model_load_path = ''
         self.buffer_load_path = ''
         self.encoding_load_path = ''
+        self.extra_load_path = ''
         self.log_interval = 10
         self.eval_interval = 1
         self.save_interval = 5
@@ -118,6 +119,8 @@ class RLConfiguration(BaseConfiguration):
             self.buffer_load_path = kwargs["buffer_load_path"]
         if "encoding_load_path" in kwargs:
             self.encoding_load_path = kwargs["encoding_load_path"]
+        if "extra_load_path" in kwargs:
+            self.extra_load_path = kwargs["extra_load_path"]
         if "log_interval" in kwargs:
             self.log_interval = kwargs["log_interval"]
         if "eval_interval" in kwargs:
