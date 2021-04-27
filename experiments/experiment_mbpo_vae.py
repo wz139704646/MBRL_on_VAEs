@@ -401,7 +401,7 @@ class MBPOVAEsExperiment(BaseExperiment):
             q_critic_target1.to(self.device)
             q_critic_target2.to(self.device)
             target_entropy = sac_cfg['target_entropy'] or \
-                -np.prod(self.action_space.shape).item()
+                -np.prod(self.action_shape).item()
             self.agent = SAC(actor, q_critic1, q_critic2, q_critic_target1, q_critic_target2,
                              sac_cfg['batch_size'], sac_cfg['num_grad_steps'], env_cfg.gamma,
                              1.0, sac_cfg['actor_lr'], sac_cfg['critic_lr'], sac_cfg['soft_target_tau'],
