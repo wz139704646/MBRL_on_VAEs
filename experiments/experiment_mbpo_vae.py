@@ -115,6 +115,12 @@ class MBPOVAEsExperiment(BaseExperiment):
                 self.encoding_results_dir = encoding_results_dir
                 test_config.save_config.default_dir = encoding_results_dir
 
+            # ensure monitoring logs directory
+            monitor_dir = rl_cfg.monitor_dir
+            self.monitor_dir = os.path.join(monitor_dir, current_time)
+            if not os.path.exists(self.monitor_dir):
+                os.makedirs(self.monitor_dir)
+
             # other settings
             self.device = torch.device(rl_cfg.device)
             if self.encoding:
@@ -609,6 +615,13 @@ class MBPOVAEsExperiment(BaseExperiment):
                         extra['encoding_global_step'] = self.encoding_global_step
                     self._save(extra=extra)
         except Exception:
+            # store buffers and losses when error occurred
+            self.real_buffer.save(os.path.join(self.monitor_dir, 'real_state_buffer.pt'))
+            self.virtual_buffer.save(os.path.join(self.monitor_dir, 'virtual_state_buffer.pt'))
+            if self.encoding:
+                self.obs_buffer.save(os.path.join(self.monitor_dir, 'real_obs_buffer.pt'))
+            torch.save(self.losses, os.path.join(self.monitor_dir, 'losses.pt'))
+
             raise
 
     def after_run(self, **kwargs):

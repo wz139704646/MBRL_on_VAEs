@@ -84,6 +84,7 @@ class RLConfiguration(BaseConfiguration):
         self.save_model_config = None
         self.save_result_config = None
         self.encoding_config = None
+        self.monitor_dir = './logs'
         self.model_load_path = ''
         self.buffer_load_path = ''
         self.encoding_load_path = ''
@@ -113,6 +114,8 @@ class RLConfiguration(BaseConfiguration):
             self.save_result_config = SaveResultsConfiguration(**kwargs["save_result_config"])
         if "encoding_config" in kwargs:
             self.encoding_config = RLEncodingConfiguration(**kwargs["encoding_config"])
+        if "monitor_dir" in kwargs:
+            self.monitor_dir = kwargs["monitor_dir"]
         if "model_load_path" in kwargs:
             self.model_load_path = kwargs["model_load_path"]
         if "buffer_load_path" in kwargs:

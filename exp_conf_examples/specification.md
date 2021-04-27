@@ -80,6 +80,7 @@ Based on pytorch
     algos: 使用的算法相关配置，字典类型
     save_model_config: 保存模型相关参数，同之前 train 下的 save_config
     save_result_config: 保存结果相关参数，同之前 test 下的 save_config
+    monitor_dir: 监控目录，保存运行过程中的异常监控数据
     model_load_path: 加载已保存的模型的路径
     buffer_load_path: 加载已保存 buffer 的路径
     encoding_load_path: 加载已保存encoding model(vae)的路径
