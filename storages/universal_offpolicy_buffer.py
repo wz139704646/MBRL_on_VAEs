@@ -79,7 +79,7 @@ class SimpleUniversalBuffer:
         for name in self.entry_infos:
             self.__dict__[name] = buffer_infos[name]
             sizes.append(buffer_infos[name].shape[0])
-        assert len(set(sizes)) == 1 and list(set(sizes))[0] == self.size
+        assert len(set(sizes)) == 1
         self.resize(self.buffer_size)
 
     def get_batch_generator_inf(self, batch_size: Optional[int], ranges=None) -> Generator:
